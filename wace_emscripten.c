@@ -36,24 +36,44 @@ uint32_t *_env__tempDoublePtr_;
 
 
 // Initialize function/jump table
+#ifndef __arm__
 void segv_thunk_handler(int cause, siginfo_t * info, void *uap) {
-    int index = (info->si_addr - (void *)_env__table_.entries);
     if (info->si_addr >= (void *)_env__table_.entries &&
-        (info->si_addr - (void *)_env__table_.entries) < TABLE_COUNT) {
+        info->si_addr < (void *)_env__table_.entries + TABLE_COUNT) {
+        int index = (info->si_addr - (void *)_env__table_.entries);
         uint32_t fidx = _env__table_.entries[index];
         ucontext_t *context = uap;
-        void (*f)(void);
-        f = setup_thunk_in(fidx);
+        void (*f)(void) = setup_thunk_in(fidx);
         // Test/debug only (otherwise I/O should be avoided in a signal handlers)
         //printf("SIGSEGV raised at address %p, index: %d, fidx: %d\n",
         //        info->si_addr, index, fidx);
 
-        // On Linux x86, general register 14 is EIP
-        context->uc_mcontext.gregs[14] = (unsigned int)f;
+        context->uc_mcontext.gregs[REG_EIP] = (unsigned int)f;
     } else {
         // What to do here?
     }
 }
+#endif
+
+#ifdef __arm__
+void segv_thunk_handler(int cause, siginfo_t * info, void *uap) {
+  if (info->si_addr >= (void *)_env__table_.entries &&
+      info->si_addr < (void *)_env__table_.entries + TABLE_COUNT) {
+    int index = (info->si_addr - (void *)_env__table_.entries);
+    uint32_t fidx = _env__table_.entries[index];
+    ucontext_t *context = uap;
+    void (*f)(void) = setup_thunk_in(fidx);
+    // Test/debug only (otherwise I/O should be avoided in a signal handlers)
+    //printf("SIGSEGV raised at address %p, index: %d, fidx: %d\n",
+    //        info->si_addr, index, fidx);
+    // BUGBUG: [skeptomai] As-is this can't be right because of PC-8 on Arm, I think..
+    // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0473f/Babbdajb.html
+    context->uc_mcontext.arm_ip = (unsigned int)f;
+  } else {
+    // What to do here?
+  }
+}
+#endif
 
 void init_thunk_in_trap() {
     // Trap on sigsegv
@@ -62,8 +82,8 @@ void init_thunk_in_trap() {
     sa.sa_flags = SA_SIGINFO;
     sigemptyset (&sa.sa_mask);
     if (sigaction (SIGSEGV, &sa, 0)) {
-	perror ("sigaction");
-	exit(1);
+      perror ("sigaction");
+      exit(1);
     }
 
     // Allow READ/WRITE but prevent execute. This only works if PROT_EXEC does

@@ -1,6 +1,8 @@
 ##########################################################
 # User configurable build options
 
+ARCH := $(shell uname -m)
+
 # libc or fooboot
 PLATFORM = libc
 
@@ -10,7 +12,13 @@ USE_READLINE ?=
 USE_SDL ?= 1
 
 #CFLAGS ?= -O2 -Wall -Werror -Wextra -MMD -MP
+ifeq ($(ARCH), x86_64)
+CFLAGS ?= -O2 -Wall -Werror -MMD -MP -m32 -D_GNU_SOURCE
+endif
+
+ifeq ($(ARCH), armv7l)
 CFLAGS ?= -O2 -Wall -Werror -MMD -MP
+endif
 
 EXTRA_WAC_LIBS ?=
 EXTRA_WACE_LIBS ?=
@@ -18,7 +26,7 @@ EXTRA_WACE_LIBS ?=
 
 ##########################################################
 
-CC = gcc $(CFLAGS) -std=gnu99 -m32 -g
+CC = gcc $(CFLAGS) -std=gnu99 -g
 EMCC = emcc $(CFLAGS) -s WASM=1 -s SIDE_MODULE=1 -s LEGALIZE_JS_FFI=0
 
 WA_DEPS = util.o thunk.o
