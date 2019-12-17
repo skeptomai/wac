@@ -1,9 +1,15 @@
 # What is WebAssembly?
 
+From [webassembly.org](https://webassembly.org),
+
+> WebAssembly (abbreviated Wasm) is a binary instruction format for a stack-based virtual machine. Wasm is designed as a portable target for compilation of high-level languages like C/C++/Rust, enabling deployment on the web for client and server applications.
+
+Wasm actually has two files formats, one binary and one text based on s-expressions leading to simplified debugging and even a little writing by hand if you are a lisp-style masochist.
+
 # Why would we care?
 
 Cross-compilation target for abstract platform. Could work on x86 and arm variants.
-Can be compiled or interpreted. Interpreted `wasm` could be faster than interpreted JS.
+Can be compiled or interpreted. Interpreted `wasm` is often faster than interpreted JS because of the simplified execution model, e.g. stable monomorphic call sites and strict type checking in previous compilation phases lead to less complicated generated code.
 
 ## Languages Supported
 
@@ -12,6 +18,38 @@ Can be compiled or interpreted. Interpreted `wasm` could be faster than interpre
 - C/C++
 
 # Current Prototyping Efforts
+
+## Rust / Wasm tutorial
+
+In the [Rust Wasm Book](https://rustwasm.github.io/docs/book/), there's a tutorial on generating `wasm` from Rust and combining it with standard JS in the browser to implement [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway's_Game_of_Life). This is a useful exercise all across the board, for an intro to Rust, the applicability of `wasm` and a mild recap of JS in the browser for folks like me who've never really done front-end development. I would suggest following the instructions to install debugging extensions in the browser and stepping through the code. It's enlightening.
+
+## Development Environment for x86 and armv7l
+
+I started with this minimal [webassembly interpreter in C](https://github.com/kanaka/wac) to determine how portable it is to `armv7l`. The original is meant to be built as 32-bit which is well explained in the instructions. It compiles relatively cleanly for 32-bit `armv7l` as well, with a couple small fixes in my git fork.
+
+# Needed to build Docker image for install on arm
+
+In the directory with the Dockerfile..
+
+`curl -O https://nodejs.org/dist/v13.3.0/node-v13.3.0-linux-armv7l.tar.xz`
+
+then
+
+`docker build -t wac-arm .`
+
+# Additional Information
+
+- [About Emscripten](https://emscripten.org/docs/introducing_emscripten/about_emscripten.html)
+
+- [Binaryen](https://github.com/WebAssembly/binaryen)
+
+- [AssemblyScript](https://docs.assemblyscript.org)
+
+- [webassembly.org](https://webassembly.org)
+
+- [Rust and Wasm](https://rustwasm.github.io/docs.html)
+
+# Appendix
 
 The `mcontext_t` struct in `ucontext.h` is different on armv7 than on x86.
 
@@ -73,14 +111,3 @@ void segv_thunk_handler(int cause, siginfo_t * info, void *uap) {
 I'm not sure yet how to do that on armv7. The `mcontext_t` struct is there, with registers, but I'm not sure how it's used.
 
 Also read https://www.deadalnix.me/2012/03/24/get-an-exception-from-a-segfault-on-linux-x86-and-x86_64-using-some-black-magic/
-
-Needed to install on arm
-`apt-get install freeglut3 freeglut3-dev`
-
-# Additional Information
-
-- [About Emscripten](https://emscripten.org/docs/introducing_emscripten/about_emscripten.html)
-
-- [AssemblyScript](https://docs.assemblyscript.org)
-
-- [Binaryen](https://github.com/WebAssembly/binaryen)
