@@ -27,7 +27,9 @@ In the [Rust Wasm Book](https://rustwasm.github.io/docs/book/), there's a tutori
 
 I started with this minimal [webassembly interpreter in C](https://github.com/kanaka/wac) to determine how portable it is to `armv7l`. The original is meant to be built as 32-bit which is well explained in the instructions. It compiles relatively cleanly for 32-bit `armv7l` as well, with a couple small fixes in my git fork.
 
-# Needed to build Docker image for install on arm
+For folks without a lot of Docker experience, I'd recommend installing Docker Desktop and then running `docker pull kanaka/wac` which is sufficient to get an image with all the build tools for 32 bit C/C++ and wasm. Follow the instructions in the `kanaka/wac` readme.
+
+# Building Docker image for armv7l
 
 In the directory with the Dockerfile..
 
